@@ -1,0 +1,177 @@
+---
+title: "Statistical inference with the GSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+```
+
+### Load data
+
+Make sure your data and R Markdown files are in the same directory. When loaded
+your data file will be called `gss`. Delete this note when before you submit 
+your work. 
+
+```{r load-data}
+load("gss.Rdata")
+```
+
+
+
+* * *
+
+## Part 1: Data
+The GSS is NORC's longest running project, and one of its most influential. Except for U.S. Census data, the GSS is the most frequently analyzed source of information in the social sciences. GSS data are used in numerous newspaper, magazine, and journal articles, by legislators, policy makers, and educators.
+The GSS aims to gather data on contemporary American society in order to monitor and explain trends and constants in attitudes, behaviors, and attributes; to examine the structure and functioning of society in general as well as the role played by relevant subgroups; to compare the United States to other societies in order to place American society in comparative perspective and develop cross-national models of human society; and to make high-quality data easily accessible to scholars, students, policy makers, and others, with minimal cost and waiting.
+This extract of the General Social Survey (GSS) Cumulative File 1972-2012 provides a sample of selected indicators in the GSS with the goal of providing a convenient data resource for students learning statistical reasoning using the R language. 
+<h5><u>GENERALIZABILTY:</u></h5>
+Generalizability by definition involves the extent to which the results of a study can be applied beyond the sample to the larger population.GSS used random Sampling and It can be generalized to all working US population from 1972-2012.
+<h5><u>CAUSALITY:</u></h5>
+Association does not mean causation. As GSS is an observational study to monitor societal change and the growing complexity of American society. Establishing causation by ruling out the possibility of any lurking variable, or by assuming that individuals differ only with respect to the values of the explanatory variable is difficult. Due to the lurking variables, it is not preferable to establish causation in an observational study.
+
+* * *
+
+## Part 2: Research question
+
+Is there a difference in finding an equally good job in R between 2002 and 2012?
+
+This is an interesting question as it addresses the difference of demand in R and the availability of jobs in R on 2002 and 2012 and I found it very interesting to research. I am really glad I researched this topic and believe that it has given me a better understanding of inferential statistics. 
+
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+```{r}
+gss_test<-gss%>%filter(!is.na(jobfind))
+ gss_test12<-gss_test%>%filter(year=='2012')
+ gss_test02<-gss_test%>%filter(year=='2002')
+ gss_test02<-gss_test%>%filter(year=='2002')%>%select(year,jobfind)
+ gss_test12<-gss_test%>%filter(year=='2012')%>%select(year,jobfind)
+ gss_test12<-gss_test%>%filter(year=='2012')%>%select(year,jobfind)%>%count(jobfind)%>%group_by(jobfind)
+ 
+ gss_test02<-gss_test%>%filter(year=='2002')%>%select(year,jobfind)%>%count(jobfind)%>%group_by(jobfind)
+ 
+  gss_test02<-gss_test02%>%mutate(proportion=n/sum(gss_test02$n))
+  
+  ggplot(data = gss_test02, aes(x = gss_test02$jobfind, y = gss_test02$n, group = gss_test02$jobfind, fill = gss_test02$jobfind))+ geom_bar(stat = "identity", width = 0.5, position = "dodge")+  theme_bw()+ theme(axis.text.x = element_text(angle = 90))+ scale_fill_discrete(name = "JobFind") + xlab(" Could R find equally good job?(2002)") + ylab("Count")
+  
+ gss_test12<-gss_test12%>%mutate(proportion=n/sum(gss_test12$n))
+ 
+ ggplot(data = gss_test12, aes(x = gss_test12$jobfind, y = gss_test12$n, group = gss_test12$jobfind, fill = gss_test12$jobfind))+ geom_bar(stat = "identity", width = 0.5, position = "dodge")+  theme_bw()+ theme(axis.text.x = element_text(angle = 90))+ scale_fill_discrete(name = "JobFind") + xlab(" Could R find equally good job?(2012)") + ylab("Count")
+ 
+ gss_merge<-merge(gss_test02,gss_test12,by='jobfind',all=TRUE)
+ 
+ colnames(gss_merge)[2:5]<-c("Count-2002","Proportion-2002","Count-2012","Proportion-2012")
+ 
+ library(reshape2)
+ gss_merge[2]<-NULL
+ gss_merge[3]<-NULL
+ dat <- melt(gss_merge, id="jobfind")
+ library(scales)
+ 
+ ggplot(dat, aes(variable, value, fill = jobfind)) +
+    geom_bar(position = "fill", stat = "identity") +
+    scale_y_continuous(labels = percent)
+ 
+ 
+ 
+```
+<h5><u>Summary:</u></h5>
+As Per the above Statistics and Graph,There is a clear trend in the 3 categorical variables (Not Easy,Somewhat Easy,Very Easy).The proprtion However, we cannot rule out the possibility that these results may not be related and they may have happened by luck only.
+
+* * *
+
+## Part 4: Inference
+
+<h5><u>Inference 1:</u></h5>
+Null Hypothesis H0: Job finding in R is very easy in 2002   is the same as the job finding in R is very easy in 2012.
+
+Alternative Hypothesis HA: Job finding in R is very easy in 2002   is  different as the job finding in R is very easy in 2012.
+
+H0: p1 = p2
+HA:they are not all equal to each other
+
+<h5><u>Conditions:</u></h5>
+Because the Entries are randomized in the survey , they can be treated as independent.
+We also must check the success-failure condition for each group. Under the null hypothesis, the proportions p2002 and p2012 are equal, so we check the success-failure condition with our best estimate of these values under H0, the pooled proportion
+from the two samples, 
+
+pˆ = 0.210
+
+pˆ x n2002 = 0.210 x 573= 120.767
+
+(1-pˆ) x n2002 = 0.79 x 573 = 452.67
+
+pˆ x n2012 = 0.210 x 765= 160.65 
+
+(1-pˆ) x n2012 = 0.79 x 765= 604.35
+
+The success-failure condition is satisfied since all values are at least 10, and we can
+safely apply the normal model.
+
+```{r}
+
+ gss_test02<-gss_test%>%filter(year=='2002')%>%select(year,jobfind)%>%count(jobfind)%>%group_by(jobfind)
+ gss_test12<-gss_test%>%filter(year=='2012')%>%select(year,jobfind)%>%count(jobfind)%>%group_by(jobfind)
+ prop.test(x=c(gss_test02$n[1],gss_test12$n[1]),n=c(sum(gss_test02$n),sum(gss_test12$n)),correct=FALSE)
+```
+
+<h5><u>Inference 2:</u></h5>
+
+Null Hypothesis H0: Job finding in R is not easy in 2002 is the same as the job finding in R is not easy in 2012.
+
+Alternative Hypothesis HA: Job finding in R is not easy in 2002   is  different as the job finding in R is not easy in 2012.
+
+H0: p1 = p2
+
+HA:they are not all equal to each other(p1 != p2).
+
+<h5><u>Conditions:</u></h5>
+Because the Entries are randomized in the survey , they can be treated as independent.
+We also must check the success-failure condition for each group. Under the null hypothesis, the proportions p2002 and p2012 are equal, so we check the success-failure condition with our best estimate of these values under H0, the pooled proportion from the two samples, 
+
+pˆ = 0.426
+
+pˆ x n2002 = 0.426 x 573= 244.098
+
+(1-pˆ) x n2002 = 0.574 x 573 = 328.902
+
+pˆ x n2012 = 0.426 x 765= 325.89 
+
+(1-pˆ) x n2012 = 0.574 x 765= 439.11
+
+The success-failure condition is satisfied since all values are at least 10, and we can
+safely apply the normal model.
+
+
+```{r}
+ prop.test(x=c(gss_test02$n[3],gss_test12$n[3]),n=c(sum(gss_test02$n),sum(gss_test12$n)),correct=FALSE)
+```
+
+<h5><u>Conclusion:</u></h5>
+
+Concluding the findings by 2002 and 2012, there is a significant difference   in finding job in R. 
+
+According to Inference 1, p-value from the Chi-square test is rather small(1.817e-06). Since the p-value is small (less than α=0.05), we reject H0 in favour of the alternative hypothesis HA. The data provides convincing evidence that finding job in R are different in 2002 and 2012.
+We are 95% confident that differnce in proportion of jobfind are easy in 2002 and 2012 is  0.0627 to 0.152.
+Probability of obeserving an extreme value given the proportions(2002,2012) are same is 1.817e-06.
+
+According to Inference 2, the p-value from the Chi-square test  is rather small(2.071e-05). Since the p-value is small (less than α=0.05), we reject H0 in favour of the alternative hypothesis HA. The data provides convincing evidence that finding job in R are different in 2002 and 2012.
+We are 95% confident that differnce in proportion of jobfind are not easy in 2002 and 2012 is  0.0627 to 0.152.
+Probability of obeserving an extreme value given the proportions(2002,2012) are same is 2.071e-05.
+
+However, this analysis does not imply that number of jobs have decreased in 2012 compared to 2002.One shortcoming of the study is the current data not including people who are working in R.The current analysis does not take into account possible extraneous variables such as age, gender, experince and Degree. A further research could examine the relationship between these variables and job find.
+
+
